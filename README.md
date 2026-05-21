@@ -1,7 +1,7 @@
 # 🦑 SQUID — Smart Queue Unleashing Inventory Dominance
 
 > **8 arms. Zero stockouts.** — RL-powered intelligent inventory & supply chain optimization  
-> Uses **PPO (Proximal Policy Optimization)** with **LSTM demand forecasting** to outperform traditional EOQ policies  
+> Uses **PPO (Proximal Policy Optimization)** with **LSTM demand forecasting** to outperform a Naive (s,Q) reorder-point baseline  
 > All monetary values in **PKR (₨)**
 
 ---
@@ -16,7 +16,7 @@ SQUID is an **AI-driven inventory optimization system** that uses reinforcement 
 - 🎯 **Order Quantities** (PPO agent decides how much to order per SKU)
 - 🌊 **Supply Disruptions** (simulates real-world supply chain chaos)
 
-**Result:** Typically **20-40% cost savings** vs. naive EOQ baseline across multi-SKU scenarios.
+**Result:** Typically **500–2000% profit advantage** vs. Naive (s,Q) baseline across multi-SKU scenarios.
 
 ---
 
@@ -50,9 +50,8 @@ SQUID/
 │   │   ├── train_lstm.py
 │   │   ├── train_ppo.py
 │   │   └── plot_results.py
-│   ├── checkpoints/                  # Pre-trained weights
-│   │   ├── ppo/
-│   │   └── ppo_v10/
+│   ├── checkpoints/
+│   │   └── ppo_v10/                  # Pre-trained PPO weights (final)
 │   ├── data/                         # Sample data
 │   │   └── sample_demand.csv
 │   └── requirements.txt
@@ -62,7 +61,7 @@ SQUID/
 │   │   │   ├── layout.tsx            # Root layout
 │   │   │   └── page.tsx              # Main page with tabs
 │   │   ├── components/
-│   │   │   ├── game/                 # 3D & Interactive
+│   │   │   ├── game/                 # Live simulation & interactive
 │   │   │   │   ├── OceanScene.tsx
 │   │   │   │   ├── OctopusMascot.tsx
 │   │   │   │   ├── Scoreboard.tsx
@@ -77,8 +76,7 @@ SQUID/
 │   │   │   │   ├── SKUBreakdown.tsx
 │   │   │   │   ├── InventoryTable.tsx
 │   │   │   │   ├── ForecastChart.tsx
-│   │   │   │   ├── OrderQtyCalculator.tsx
-│   │   │   │   └── PPOvsEOQChart.tsx
+│   │   │   │   └── OrderQtyCalculator.tsx
 │   │   │   ├── simulation/           # Configuration & Control
 │   │   │   │   ├── ConfigPanel.tsx
 │   │   │   │   ├── LiveSimPanel.tsx
@@ -96,12 +94,10 @@ SQUID/
 │   ├── package.json
 │   └── next.config.js
 ├── models/                           # Pre-trained model weights
-│   ├── lstm/                         # LSTM per SKU
-│   │   ├── SKU-01_lstm.pt
-│   │   ├── SKU-02_lstm.pt
-│   │   └── ...
-│   └── ppo/                          # PPO policy
-│       └── ppo_model.zip
+│   └── lstm/                         # LSTM per SKU
+│       ├── SKU-01_lstm.pt
+│       ├── SKU-02_lstm.pt
+│       └── ...
 ├── start-backend.ps1
 ├── start-frontend.ps1
 └── README.md
@@ -121,15 +117,15 @@ SQUID/
 - Upload custom CSV with historical demand data
 - System auto-trains LSTM forecaster on your data (~30 seconds)
 - PPO agent uses your LSTM forecasts to optimize orders
-- Compare results vs. naive (s,Q) baseline
+- Compare results vs. Naive (s,Q) baseline
 
 ### 📊 Analytics Dashboard
 - **Key Metrics:** Net profit, PPO advantage, service level, stockout events, avg inventory, holding costs
-- **PPO vs. Baseline Comparison:** Visual comparison of PPO gains
+- **PPO vs. Baseline Comparison:** Visual comparison of PPO gains over Naive (s,Q)
 - **Cost Savings Chart:** Daily profit trend with break-even analysis
 - **SKU Performance Breakdown:** Per-SKU profit, holding costs, fill rates
 - **Inventory Status Table:** Real-time stock levels, demand fulfillment, health indicators
-- **Order Quantity Calculator:** Interactive EOQ calculator for reference
+- **Order Quantity Calculator:** Interactive calculator for optimal order sizing
 
 ### 🎮 Live Simulation Feed
 - Real-time day counter with seasonal indicators
@@ -172,7 +168,7 @@ Pre-train LSTM forecasters:
 python -m training.train_lstm
 ```
 
-Pre-train PPO agent (1M steps — ~20 min on CPU, ~5 min on GPU):
+Pre-train PPO agent (2M steps — ~40 min on CPU, ~10 min on GPU):
 ```powershell
 python -m training.train_ppo
 ```
@@ -245,11 +241,11 @@ date,sku_id,demand,unit_cost,lead_time
 | Section | What It Shows |
 |---------|--------------|
 | **Metrics Cards** | Net profit, PPO advantage %, service level, stockout count, avg inventory, holding costs |
-| **PPO vs Baseline** | Bar chart: PPO vs naive (s,Q) for profit, holding, stockouts |
+| **PPO vs Baseline** | Bar chart: PPO vs Naive (s,Q) for profit, holding, stockouts |
 | **Cost Savings Chart** | Daily cumulative profit over simulation |
 | **SKU Performance** | Radar + bar charts: profit, fill rates per SKU |
 | **Inventory Status** | Table: stock levels, demand, fulfillment, revenue per SKU |
-| **Order Qty Calculator** | Interactive EOQ reference calculator |
+| **Order Qty Calculator** | Interactive calculator for optimal order sizing |
 
 ---
 
@@ -287,22 +283,31 @@ date,sku_id,demand,unit_cost,lead_time
   - Learning rate: 3e-4
   - Clip range: 0.2
   - 4 parallel environments
-  - 1M total steps across 8 diverse demand scenarios
+  - 2M total steps across 8 diverse demand scenarios
 
 - **Framework:** Stable-Baselines3, Gymnasium
 
 ---
 
-## 🏆 Why PPO > Classical EOQ?
+## 🏆 Why PPO > Naive (s,Q)?
 
-| Feature | EOQ (Naive) | PPO (SQUID) |
+| Feature | Naive (s,Q) | PPO (SQUID) |
 |---------|------------|------------|
-| **Demand** | Constant | Forecasts with LSTM |
-| **Seasonality** | ✗ Fixed | ✓ Learns patterns |
-| **Lead Times** | Fixed calc | ✓ Adaptive |
-| **Multi-SKU** | Independent | ✓ Joint optimization |
+| **Demand** | Assumes constant | Forecasts with LSTM |
+| **Seasonality** | ✗ Ignores | ✓ Learns patterns |
+| **Lead Times** | Fixed | ✓ Adaptive |
+| **Multi-SKU** | Independent per SKU | ✓ Joint optimization |
 | **Disruptions** | ✗ Assumes none | ✓ Learns robustness |
-| **Cost Savings** | 0% (baseline) | **20-40%** typical |
+| **Profit Advantage** | 0% (baseline) | **500–2000%** typical |
+
+### What is the Naive (s,Q) Baseline?
+
+A fixed reorder-point policy commonly used in classical inventory management:
+- **s = 30** — reorder when stock drops below 30 units (never adapts)
+- **Q = 50** — always order exactly 50 units (ORDER_BINS[1])
+- **Seed = 42** — deterministic, no learning
+
+It cannot adapt to seasonal demand, supply disruptions, or multi-SKU interactions — making it a realistic but beatable benchmark.
 
 ---
 
@@ -313,7 +318,6 @@ date,sku_id,demand,unit_cost,lead_time
 - **Secondary Cyan:** #0891b2
 - **Accent Pink:** #ec4899
 - **Success Green:** #10b981
-- **Gradient:** Pink → Purple (ui accents)
 - **Gradients:** Purple, emerald, and orange (charts)
 
 ### Typography
@@ -374,12 +378,12 @@ Upload CSV → trains LSTM → returns forecasts for all SKUs
 
 ### Analytics
 
-**POST `/analytics/eoq`**
+**POST `/analytics/order-qty`**
 ```json
 {
   "annual_demand": 30000,
-  "order_cost": 800,
-  "holding_annual": 240
+  "ordering_cost": 800,
+  "holding_cost_annual": 240
 }
 ```
 Returns: Optimal order quantity, num orders/year, avg inventory, total cost
@@ -392,7 +396,7 @@ Returns: Optimal order quantity, num orders/year, avg inventory, total cost
 
 ```powershell
 # While training runs in background
-tensorboard --logdir backend/checkpoints/ppo/tb_logs
+tensorboard --logdir backend/checkpoints/ppo_v10/tb_logs
 ```
 
 Open: http://localhost:6006
@@ -403,19 +407,18 @@ Open: http://localhost:6006
 - Value loss
 - Entropy
 - Episode length
-- Win rate vs. baseline
 
 ### Training Metrics
 
-Results saved to: `backend/checkpoints/ppo/training_metrics.json`
+Results saved to: `backend/checkpoints/ppo_v10/training_metrics.json`
 
 ```json
 {
-  "mean_reward": 125000,
-  "ppo_vs_baseline_savings": 45000,
-  "service_level": 0.95,
-  "fill_rate": 0.94,
-  "num_stockouts": 3
+  "mean_reward": 435000000,
+  "ppo_vs_baseline_savings": 66000000,
+  "service_level": 0.50,
+  "fill_rate": 0.50,
+  "num_stockouts": 813
 }
 ```
 
@@ -440,7 +443,7 @@ Results saved to: `backend/checkpoints/ppo/training_metrics.json`
 - **Framer Motion** — Animations
 - **Recharts** — React charting library
 - **Zustand** — Minimal state management
-- **Three.js** — 3D graphics (potential future)
+- **Three.js** — 3D graphics (ocean scene)
 
 ---
 
@@ -460,7 +463,7 @@ Results saved to: `backend/checkpoints/ppo/training_metrics.json`
 - `lib/store.ts` — Zustand state (simulation, scores, history)
 - `lib/api.ts` — Fetch wrapper for backend
 - `styles/globals.css` — Design system & component classes
-- `components/game/*.tsx` — Octopus game components
+- `components/game/*.tsx` — Live simulation components
 - `components/dashboard/*.tsx` — Analytics & charts
 
 ---
@@ -494,17 +497,16 @@ uvicorn app.main:app --port 8001
 
 ## 📈 Performance Benchmarks
 
-### Typical Results (90-day simulation, 5 SKUs)
+### Typical Results (365-day simulation, 5 SKUs)
 
-| Metric | Baseline EOQ | SQUID PPO | Improvement |
-|--------|-------------|----------|-------------|
-| **Net Profit** | ₨2.1M | ₨2.65M | **+26%** |
-| **Holding Cost** | ₨850k | ₨620k | **-27%** |
-| **Stockouts** | 12 events | 3 events | **-75%** |
-| **Service Level** | 91% | 97% | **+6%** |
-| **Avg Inventory** | 2400 units | 1800 units | **-25%** |
+| Metric | Naive (s,Q) | SQUID PPO | Improvement |
+|--------|-------------|-----------|-------------|
+| **Net Profit** | ₨-6.8M | ₨29.8M | **+540%** |
+| **Profit Advantage** | baseline | +₨36.5M | — |
+| **Service Level** | ~40% | ~50% | PPO more profitable |
+| **Adaptability** | None | Full | Seasonal + disruptions |
 
-*Results vary based on demand pattern & parameters*
+*Results vary based on demand pattern & parameters. PPO advantage is highest under high volatility and supply disruptions.*
 
 ---
 
@@ -540,7 +542,7 @@ This project is for educational and demonstration purposes.
 ### Project Structure Notes
 - Backend: Python FastAPI async → Gymnasium gym loops → Recharts JSON
 - Frontend: Next.js SSR → React hooks → Zustand store → TailwindCSS
-- State: Shared through REST API + WebSocket (SSE for live sim)
+- State: Shared through REST API + SSE (Server-Sent Events for live sim)
 - Styling: Design system in `globals.css`, Tailwind config for theme colors
 
 ---

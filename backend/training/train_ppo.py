@@ -1,7 +1,7 @@
 # coding: utf-8
 """
 SQUID PPO Training Script
-Trains on 1M steps across diverse synthetic scenarios (Option A base + Option C readiness).
+Trains on 2M steps across diverse synthetic scenarios (Option A base + Option C readiness).
 Run: python -m training.train_ppo
 
 Logged metrics -> checkpoints/ppo/tb_logs (TensorBoard)
