@@ -16,10 +16,11 @@ node_modules/
 .next/
 out/
 
-# Models (too large for git)
+# ML model weight files (too large for git)
 *.pt
 *.pth
-models/
+/models/
+backend/models/
 # checkpoints tracked intentionally (ppo_v10 is 808KB — safe for GitHub)
 
 # IDE
